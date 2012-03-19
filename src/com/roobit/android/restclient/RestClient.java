@@ -6,13 +6,14 @@ import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import com.roobit.android.restclient.RestClientRequestTask.RestClientRequestListener;
-
 import android.net.Uri;
+
+import com.roobit.android.restclient.RestClientRequestTask.RestClientRequestListener;
 
 public class RestClient implements RestClientRequestListener {
 
 	public interface OnCompletionListener {
+		public void processSuccessfulResult(RestClient client, RestResult result);
 		public void success(RestClient client, RestResult result);
 		public void failedWithError(RestClient restClient, int responseCode, RestResult result);
 	}
@@ -197,6 +198,15 @@ public class RestClient implements RestClientRequestListener {
 				completionListener.success(this, result);
 			} else {
 				completionListener.failedWithError(this, result.getResponseCode(), result);
+			}
+		}
+	}
+
+	@Override
+	public void requestFinishedPreprocess(RestResult result) {
+		if(completionListener != null) {
+			if(result.isSuccess()) {
+				completionListener.processSuccessfulResult(this, result);
 			}
 		}
 	}

@@ -11,6 +11,7 @@ public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 	public interface RestClientRequestListener {
 		public void requestStarted();
 		public void requestCancelled();
+		public void requestFinishedPreprocess(RestResult result);
 		public void requestFinished(RestResult result);
 	}
 
@@ -27,7 +28,11 @@ public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 		Properties httpHeaders = (Properties) args[2];
 		Properties parameters = (Properties) args[3];
 		ByteArrayOutputStream postData = (ByteArrayOutputStream) args[4];
-		return RestClientRequest.synchronousExecute(op, uri, httpHeaders, parameters, postData);
+		RestResult result = RestClientRequest.synchronousExecute(op, uri, httpHeaders, parameters, postData);
+		if(listener != null) {
+			listener.requestFinishedPreprocess(result);
+		}
+		return result;
 	}
 
 	
