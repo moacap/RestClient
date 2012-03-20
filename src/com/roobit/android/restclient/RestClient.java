@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import android.net.Uri;
+import android.os.AsyncTask;
 
 import com.roobit.android.restclient.RestClientRequestTask.RestClientRequestListener;
 
@@ -28,6 +29,7 @@ public class RestClient implements RestClientRequestListener {
 	ByteArrayOutputStream postData;
 	Operation operation;
 	OnCompletionListener completionListener;
+	private AsyncTask<Object, Void, RestResult> requestTask;
 	
 	static RestClient instance;
 	
@@ -90,7 +92,7 @@ public class RestClient implements RestClientRequestListener {
 	
 	public RestClient execute(OnCompletionListener completionListener) {
 		this.completionListener = completionListener;
-		new RestClientRequestTask(this).execute(getOperation(), buildUri(), httpHeaders, parameters, postData);
+		requestTask = new RestClientRequestTask(this).execute(getOperation(), buildUri(), httpHeaders, parameters, postData);
 		return this;
 	}
 	
@@ -98,7 +100,11 @@ public class RestClient implements RestClientRequestListener {
 		this.completionListener = listener;
 	}
 	
-
+	public void cancelRequest() {
+		if(requestTask != null && !requestTask.isCancelled()) {
+			requestTask.cancel(true);
+		}
+	}
 	
 	/**
 	 * For clients managing their own threads, provide a synchronous method.
