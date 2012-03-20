@@ -94,6 +94,12 @@ public class RestClient implements RestClientRequestListener {
 		return this;
 	}
 	
+	public void setOnCompletionListener(OnCompletionListener listener) {
+		this.completionListener = listener;
+	}
+	
+
+	
 	/**
 	 * For clients managing their own threads, provide a synchronous method.
 	 * 
