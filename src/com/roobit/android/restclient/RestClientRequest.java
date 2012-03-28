@@ -60,6 +60,7 @@ public class RestClientRequest {
 			result.setResponseCode(urlConnection.getResponseCode());
 			Log.d(TAG, " - received response code [" + urlConnection.getResponseCode() + "]");
 			if(urlConnection.getResponseCode() > 0 && urlConnection.getResponseCode() < 400) {
+				result.setHeaders(urlConnection.getHeaderFields());
 				result.setResponse(convertStreamToString(new BufferedInputStream(urlConnection.getInputStream())));
 			} else {
 				result.setResponse(convertStreamToString(new BufferedInputStream(urlConnection.getErrorStream())));

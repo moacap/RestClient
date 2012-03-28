@@ -1,12 +1,15 @@
 package com.roobit.android.restclient;
 
 import java.net.HttpURLConnection;
+import java.util.List;
+import java.util.Map;
 
 public class RestResult {
 
 	int responseCode;
 	String response;
 	Exception exception;
+	private Map<String, List<String>> headers;
 
 	public RestResult() {
 		responseCode = 0;
@@ -44,4 +47,13 @@ public class RestResult {
 	public boolean hasException() {
 		return getException() != null;
 	}
+	
+	public void setHeaders(Map<String,List<String>> headers) {
+		this.headers = headers;
+	}
+	
+	public Map<String,List<String>> getHeaders() {
+		return headers;
+	}
+
 }
