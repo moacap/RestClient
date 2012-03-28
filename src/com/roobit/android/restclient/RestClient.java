@@ -175,6 +175,13 @@ public class RestClient implements RestClientRequestListener {
 		return this;
 	}
 
+	public Properties getHttpHeaders() {
+		if(httpHeaders == null) {
+			httpHeaders = new Properties();
+		}
+		return httpHeaders;
+	}
+
 	private void setHttpHeaders(Properties httpHeaders) {
 		this.httpHeaders = httpHeaders;
 	}
