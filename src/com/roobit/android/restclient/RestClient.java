@@ -23,9 +23,9 @@ public class RestClient implements RestClientRequestListener {
 
 	String baseUrl;
 	String resource;
-	LinkedHashMap<String, String> queryParameters;
-	Properties httpHeaders;
-	Properties parameters;
+	LinkedHashMap<String, String> queryParameters = null;
+	Properties httpHeaders = null;
+	Properties parameters = null;
 	ByteArrayOutputStream postData;
 	Operation operation;
 	OnCompletionListener completionListener;
@@ -125,14 +125,16 @@ public class RestClient implements RestClientRequestListener {
 	
 	public RestClient get() {
 		operation = Operation.GET;
-		setHttpHeaders(null);
-		setParameters(null);
 		return this;
 	}
 	
 	public RestClient get(Properties headers) {
 		get();
-		setHttpHeaders(headers);
+		if(httpHeaders != null) {
+			httpHeaders.putAll(headers);
+		} else {
+			setHttpHeaders(httpHeaders);
+		}
 		return this;
 	}
 	
@@ -144,14 +146,16 @@ public class RestClient implements RestClientRequestListener {
 	
 	public RestClient post() {
 		operation = Operation.POST;
-		setQueryParameters(null);
-		setHttpHeaders(null);
 		return this;
 	}
 
 	public RestClient post(Properties httpHeaders) {
 		post();
-		setHttpHeaders(httpHeaders);
+		if(httpHeaders != null) {
+			httpHeaders.putAll(httpHeaders);
+		} else {
+			setHttpHeaders(httpHeaders);
+		}
 		return this;
 	}
 	
@@ -170,8 +174,9 @@ public class RestClient implements RestClientRequestListener {
 	
 	public RestClient patch() {
 		operation = Operation.PATCH;
-		setQueryParameters(null);
-		setHttpHeaders(new Properties());
+		if(httpHeaders == null) {
+			setHttpHeaders(new Properties());
+		}
 		return this;
 	}
 
