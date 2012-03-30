@@ -126,7 +126,7 @@ public class RestClientRequest {
 		Iterator<Object> iter = httpHeaders.keySet().iterator();
 		while(iter.hasNext()) {
 			String name = (String) iter.next();
-			urlConnection.setRequestProperty(name, httpHeaders.getProperty(name));
+			urlConnection.addRequestProperty(name, httpHeaders.getProperty(name));
 		}
 	}
 	
