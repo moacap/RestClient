@@ -8,6 +8,7 @@ import android.os.AsyncTask;
 
 public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 
+	private static final int MAX_RETRIES = 3;
 	public interface RestClientRequestListener {
 		public void requestStarted();
 		public void requestCancelled();
@@ -28,7 +29,16 @@ public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 		Properties httpHeaders = (Properties) args[2];
 		Properties parameters = (Properties) args[3];
 		ByteArrayOutputStream postData = (ByteArrayOutputStream) args[4];
-		RestResult result = RestClientRequest.synchronousExecute(op, uri, httpHeaders, parameters, postData);
+		int retries = 0;
+		RestResult result = null;
+		do {
+			result = RestClientRequest.synchronousExecute(op, uri, httpHeaders, parameters, postData);
+			if(result.getResponseCode() == -1 && !isCancelled()) {
+				continue;
+			} else {
+				break;
+			}
+		} while(retries++ < MAX_RETRIES);
 		if(listener != null) {
 			listener.requestFinishedPreprocess(result);
 		}

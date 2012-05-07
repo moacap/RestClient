@@ -26,7 +26,6 @@ public class RestClientRequest {
 	public enum StreamingMode { CHUNKED, FIXED };
 
 	static final String TAG = "RestClientRequest";
-	private static final int MAX_RETRIES = 3;
 	static StreamingMode streamingMode = StreamingMode.CHUNKED;
 	
 	public static RestResult synchronousExecute(Operation op, Uri uri) {
@@ -50,26 +49,14 @@ public class RestClientRequest {
 		RestResult result = new RestResult();
 		HttpURLConnection urlConnection = null;
 		try {
-			int retries = 0; 
-			do
-			{
-				urlConnection = (HttpURLConnection) new URL(uri.toString()).openConnection();
-				setRequestMethod(urlConnection, op, httpHeaders);
-				setRequestHeaders(urlConnection, httpHeaders);
-				if(postData != null) {
-					setPostData(urlConnection, postData);
-				} else if(parameters != null){
-					setRequestParameters(urlConnection, parameters);
-				}
-				if(urlConnection.getResponseCode() == -1) {
-					Log.v(TAG, "received -1, retrying");
-					if (urlConnection != null) {
-						urlConnection.disconnect();
-					}
-					continue;
-				}
-				break;
-			} while(retries++ < MAX_RETRIES);
+			urlConnection = (HttpURLConnection) new URL(uri.toString()).openConnection();
+			setRequestMethod(urlConnection, op, httpHeaders);
+			setRequestHeaders(urlConnection, httpHeaders);
+			if(postData != null) {
+				setPostData(urlConnection, postData);
+			} else if(parameters != null){
+				setRequestParameters(urlConnection, parameters);
+			}
 			result.setResponseCode(urlConnection.getResponseCode());
 			Log.d(TAG, " - received response code [" + urlConnection.getResponseCode() + "]");
 			if(urlConnection.getResponseCode() > 0 && urlConnection.getResponseCode() < 400) {
