@@ -13,6 +13,7 @@ example-app/tmp/**
 # generated files
 bin/
 gen/
+target/
 
 # Local configuration file (sdk path, etc)
 local.properties
