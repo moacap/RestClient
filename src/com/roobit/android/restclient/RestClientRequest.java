@@ -24,58 +24,83 @@ import com.roobit.android.restclient.RestClient.Operation;
 public class RestClientRequest {
 
 	public enum StreamingMode { CHUNKED, FIXED };
+	HttpURLConnection _connection;
+	volatile private boolean _cancelled = false;
+
 
 	static final String TAG = "RestClientRequest";
 	static StreamingMode streamingMode = StreamingMode.CHUNKED;
-	
-	public static RestResult synchronousExecute(Operation op, Uri uri) {
+
+	public RestResult synchronousExecute(Operation op, Uri uri) {
 		return synchronousExecute(op, uri, null);
 	}
 
-	public static RestResult synchronousExecute(Operation op, Uri uri, Properties httpHeaders) {
+	public RestResult synchronousExecute(Operation op, Uri uri, Properties httpHeaders) {
 		return synchronousExecute(op, uri, httpHeaders, null, null);
 	}
 
-	public static RestResult synchronousExecute(Operation op,
-			Uri uri, 
+	public RestResult synchronousExecute(Operation op,
+			Uri uri,
 			Properties httpHeaders,
 			Properties parameters,
 			ByteArrayOutputStream postData) {
-		
+
 		Log.d(TAG, "Executing " + op.toString() + " to " + uri.toString());
-		
+
 		streamingMode = (parameters == null && postData == null)  ? StreamingMode.CHUNKED : StreamingMode.FIXED;
-		
+
 		RestResult result = new RestResult();
-		HttpURLConnection urlConnection = null;
+		_connection = null;
 		try {
-			urlConnection = (HttpURLConnection) new URL(uri.toString()).openConnection();
-			setRequestMethod(urlConnection, op, httpHeaders);
-			setRequestHeaders(urlConnection, httpHeaders);
-			if(postData != null) {
-				setPostData(urlConnection, postData);
-			} else if(parameters != null){
-				setRequestParameters(urlConnection, parameters);
+			_connection = (HttpURLConnection) new URL(uri.toString()).openConnection();
+			if(_cancelled) {
+				return result;
 			}
-			result.setResponseCode(urlConnection.getResponseCode());
-			Log.d(TAG, " - received response code [" + urlConnection.getResponseCode() + "]");
-			if(urlConnection.getResponseCode() > 0 && urlConnection.getResponseCode() < 400) {
-				result.setHeaders(urlConnection.getHeaderFields());
-				result.setResponse(convertStreamToString(new BufferedInputStream(urlConnection.getInputStream())));
+			setRequestMethod(_connection, op, httpHeaders);
+			setRequestHeaders(_connection, httpHeaders);
+			if(postData != null) {
+				setPostData(_connection, postData);
+			} else if(parameters != null){
+				setRequestParameters(_connection, parameters);
+			}
+			if(_cancelled) {
+				return result;
+			}
+			result.setResponseCode(_connection.getResponseCode());
+			if(_cancelled) {
+				return result;
+			}
+			Log.d(TAG, " - received response code [" + _connection.getResponseCode() + "]");
+			if(_connection.getResponseCode() > 0 && _connection.getResponseCode() < 400) {
+				result.setHeaders(_connection.getHeaderFields());
+				result.setResponse(convertStreamToString(new BufferedInputStream(_connection.getInputStream())));
 			} else {
-				result.setResponse(convertStreamToString(new BufferedInputStream(urlConnection.getErrorStream())));
+				result.setResponse(convertStreamToString(new BufferedInputStream(_connection.getErrorStream())));
 			}
 		} catch (Exception e) {
 			result.setException(e);
 			e.printStackTrace();
 		} finally {
-			if (urlConnection != null) {
-				urlConnection.disconnect();
+			synchronized (this) {
+				if (_connection != null) {
+					_connection.disconnect();
+					_connection = null;
+				}
 			}
 		}
-		
+
 		return result;
 	}
+
+	public void cancel() {
+		synchronized (this) {
+			_cancelled = true;
+			if(_connection != null) {
+				_connection.disconnect();
+			}
+		}
+	}
+
 
 	private static final int BUFFER_SIZE = 512;
 	private static void setPostData(HttpURLConnection urlConnection, ByteArrayOutputStream postData) {
@@ -105,31 +130,31 @@ public class RestClientRequest {
 	private static void setRequestMethod(HttpURLConnection urlConnection, Operation op, Properties httpProperties) {
 		if (op == Operation.POST || op == Operation.PATCH) {
 			urlConnection.setDoOutput(true);
-			
+
 			if (streamingMode == StreamingMode.CHUNKED) {
 				urlConnection.setChunkedStreamingMode(0);
 			}
-			
+
 			if (op == Operation.PATCH) {
 				httpProperties.put("X-HTTP-Method-Override", "PATCH");
 			}
 		}
-		
+
 		// TODO: Handle OPTIONS, HEAD, PUT, DELETE and TRACE
 	}
-	
+
 	private static void setRequestHeaders(HttpURLConnection urlConnection, Properties httpHeaders) {
 		if (httpHeaders == null) {
 			return;
 		}
-		
+
 		Iterator<Object> iter = httpHeaders.keySet().iterator();
 		while(iter.hasNext()) {
 			String name = (String) iter.next();
 			urlConnection.addRequestProperty(name, httpHeaders.getProperty(name));
 		}
 	}
-	
+
 	private static void setRequestParameters(HttpURLConnection urlConnection, Properties parameters) {
 		if (parameters == null || parameters.isEmpty()) {
 			return;
@@ -137,7 +162,7 @@ public class RestClientRequest {
 
 		String params = buildParameterString(parameters);
 		urlConnection.setFixedLengthStreamingMode(params.getBytes().length);
-		
+
 		OutputStream os = null;
 		try {
 			os = new BufferedOutputStream(urlConnection.getOutputStream());
@@ -153,7 +178,7 @@ public class RestClientRequest {
 			}
 		}
 	}
-	
+
 	private static String buildParameterString(Properties parameters) {
 		StringBuilder sb = new StringBuilder();
 		boolean prependAmp = false;
@@ -174,12 +199,12 @@ public class RestClientRequest {
 		}
 		return sb.toString();
 	}
-	
+
 	private static String convertStreamToString(InputStream is) throws IOException {
 		final char[] buffer = new char[0x10000];
 		StringBuilder sb = new StringBuilder();
 		Reader in = new InputStreamReader(is, "UTF-8");
-		
+
 		int read;
 		do {
 			read = in.read(buffer, 0, buffer.length);
@@ -187,7 +212,8 @@ public class RestClientRequest {
 				sb.append(buffer, 0, read);
 			}
 		} while (read>=0);
-		
+
 		return sb.toString();
 	}
+
 }
