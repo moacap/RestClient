@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.os.Build;
 
 public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 
@@ -40,7 +41,11 @@ public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 		if(!_cancelled) {
 			do {
 				synchronized (this) {
-					_request = new RestClientRequest();
+					if(Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+						_request = new RestClientRequest_Froyo();
+					} else {
+						_request = new RestClientRequest_Gingerbread();
+					}
 				}
 				result = _request.synchronousExecute(op, uri, httpHeaders, parameters, postData);
 				if(result.getResponseCode() == -1 && !_cancelled) {

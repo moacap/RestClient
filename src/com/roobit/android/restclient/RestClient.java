@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import android.net.Uri;
+import android.os.Build;
 
 import com.roobit.android.restclient.RestClientRequestTask.RestClientRequestListener;
 
@@ -214,4 +215,7 @@ public class RestClient implements RestClientRequestListener {
 		}
 	}
 
+	public static boolean isUsingHttpClient() {
+		return Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD;
+	}
 }
