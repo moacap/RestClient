@@ -34,6 +34,7 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.HttpConnectionParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 import org.apache.http.protocol.HTTP;
@@ -69,7 +70,10 @@ public class RestClientRequest_Froyo implements RestClientRequest {
 		if(_client == null) {
 			HttpParams params = new BasicHttpParams();
 			ConnManagerParams.setMaxTotalConnections(params, 10);
+			ConnManagerParams.setTimeout(params, 2000);
 			HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+			HttpConnectionParams.setConnectionTimeout(params, 10000);
+			HttpConnectionParams.setSoTimeout(params, 10000);
 
 			SchemeRegistry schemeRegistry = new SchemeRegistry();
 			schemeRegistry.register(new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
