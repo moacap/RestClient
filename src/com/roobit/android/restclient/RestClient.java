@@ -7,7 +7,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import android.net.Uri;
-import android.os.AsyncTask;
 
 import com.roobit.android.restclient.RestClientRequestTask.RestClientRequestListener;
 
@@ -29,7 +28,7 @@ public class RestClient implements RestClientRequestListener {
 	ByteArrayOutputStream postData;
 	Operation operation;
 	OnCompletionListener completionListener;
-	private AsyncTask<Object, Void, RestResult> requestTask;
+	private RestClientRequestTask requestTask;
 	
 	static RestClient instance;
 	
@@ -91,8 +90,14 @@ public class RestClient implements RestClientRequestListener {
 	}
 	
 	public RestClient execute(OnCompletionListener completionListener) {
+		return execute(completionListener, Thread.NORM_PRIORITY);
+	}
+
+	public RestClient execute(OnCompletionListener completionListener, int priority) {
 		this.completionListener = completionListener;
-		requestTask = new RestClientRequestTask(this).execute(getOperation(), buildUri(), httpHeaders, parameters, postData);
+		requestTask = new RestClientRequestTask(this);
+		requestTask.setThreadPriority(priority);
+		requestTask.execute(getOperation(), buildUri(), httpHeaders, parameters, postData);
 		return this;
 	}
 	
@@ -133,7 +138,7 @@ public class RestClient implements RestClientRequestListener {
 		if(httpHeaders != null) {
 			httpHeaders.putAll(headers);
 		} else {
-			setHttpHeaders(httpHeaders);
+			setHttpHeaders(headers);
 		}
 		return this;
 	}
@@ -149,12 +154,12 @@ public class RestClient implements RestClientRequestListener {
 		return this;
 	}
 
-	public RestClient post(Properties httpHeaders) {
+	public RestClient post(Properties headers) {
 		post();
 		if(httpHeaders != null) {
-			httpHeaders.putAll(httpHeaders);
+			httpHeaders.putAll(headers);
 		} else {
-			setHttpHeaders(httpHeaders);
+			setHttpHeaders(headers);
 		}
 		return this;
 	}

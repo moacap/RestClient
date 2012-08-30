@@ -17,13 +17,19 @@ public class RestClientRequestTask extends AsyncTask<Object, Void, RestResult> {
 	}
 
 	RestClientRequestListener listener;
+	private int _priority = Thread.NORM_PRIORITY;
 	
 	public RestClientRequestTask(RestClientRequestListener listener) {
 		this.listener = listener;
 	}
 
+	public void setThreadPriority(int priority) {
+		_priority = priority;
+	}
+
 	@Override
 	protected RestResult doInBackground(Object... args) {
+		Thread.currentThread().setPriority(_priority);
 		RestClient.Operation op = (RestClient.Operation) args[0];
 		Uri uri = (Uri) args[1];
 		Properties httpHeaders = (Properties) args[2];
